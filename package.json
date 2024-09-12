@@ -1,0 +1,26 @@
+{
+    "name": "@ellementul/tree-by-uuid",
+    "version": "0.1.0",
+    "description": "Shared storage for data",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ellementul/tree-by-uuid.git"
+    },
+    "keywords": [
+        "UI",
+        "Game"
+    ],
+    "main": "src/index.js",
+    "type": "module",
+    "scripts": {
+        "test": "clear && ava"
+    },
+    "dependencies": {
+        "@ellementul/uee-core": "^3.6.0",
+        "uuid": "^10.0.0",
+        "uuid-by-string": "^4.0.0"
+    },
+    "devDependencies": {
+        "ava": "^6.1.3"
+    }
+}
