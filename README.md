@@ -29,12 +29,23 @@ const object = storage.get(uuid)
 
 #### Upsert item
 Add item or update.
-If item exist, it will compare old version and new version of object, and then update.
+If item exist, it will compare old version and new version of object, and then update(or not if version older).
 If old version and new version is not comparable, then it return new uuid of created item with your version
 Version is hash of prev version + prev hash of data + new hash of data
 
 ```js
 const { uuid, version } = storage.upsert({
+    uuid,
+    hash,
+    version,
+    data
+})
+```
+
+#### Overwrite item
+Overwrite without checking version
+```js
+const { uuid, version } = storage.overwrite({
     uuid,
     hash,
     version,
@@ -48,7 +59,17 @@ If object doesn't exist then return "undefined"
 const { uuid, version } = storage.remove(uuid)
 ```
 
-#### Check sector
-#### Delete item
+#### Get Hash Sector
+```js
+const { uuid, version } = storage.sectorHash(sectorPath)
+```
 
-### As Member
+#### GetIsSynced
+```js
+const isSynced = storage.getSyncedHash(sectorPath)
+```
+
+#### SetIsSynced
+```js
+storage.setSyncedHash(sectorPath, isSynced)
+```

@@ -45,6 +45,15 @@ export class TreeByUuid {
         return  { uuid: object.uuid, version: object.version }
     }
 
+    overwrite(object) {
+        if(!object.version)
+            object.version = this.hashing(object.uuid + object.hash)
+
+        this.objects.set(object.uuid, object)
+
+        return  { uuid: object.uuid, version: object.version }
+    }
+
     remove(uuid) {
         if(this.objects.has(uuid)) {
             const object = this.objects.get(uuid)

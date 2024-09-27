@@ -51,7 +51,7 @@ test("update object", t => {
     const newData = "Bay!"
 
     const object = storage.get(t.context.uuids[0])
-    const newHash = getUuidByString("new Hash!")
+    const newHash = getUuidByString(newData)
     const newVersion = getUuidByString(object.version + object.hash + newHash)
 
     const result = storage.upsert({
@@ -90,7 +90,7 @@ test("update object with wrong version", t => {
     const newData = "BadBoy!"
 
     const object = storage.get(t.context.uuids[0])
-    const newHash = getUuidByString("new Hash!")
+    const newHash = getUuidByString(newData)
     const newVersion = getUuidByString(newHash)
 
     const result = storage.upsert({
@@ -100,6 +100,29 @@ test("update object with wrong version", t => {
         data: newData
     })
     t.not(result.uuid, t.context.uuids[0])
+    t.is(result.version, newVersion)
+
+    const updatedObject = storage.get(result.uuid)
+    t.is(updatedObject.data, newData)
+})
+
+
+test("overwrite object", t => {
+    const storage = t.context.storage
+
+    const newData = "CoolBoy!"
+
+    const object = storage.get(t.context.uuids[0])
+    const newHash = getUuidByString(newData)
+    const newVersion = getUuidByString(newHash)
+
+    const result = storage.overwrite({
+        uuid: object.uuid,
+        hash: newHash,
+        version: newVersion,
+        data: newData
+    })
+    t.is(result.uuid, t.context.uuids[0])
     t.is(result.version, newVersion)
 
     const updatedObject = storage.get(result.uuid)
