@@ -37,11 +37,13 @@ test("get object", t => {
     const data = "Hello!"
 
     const uuid = t.context.uuids[0]
+    const hash = getUuidByString(data)
 
     const object = storage.get(uuid)
 
     t.is(object.uuid, uuid)
     t.is(object.data, data)
+    t.is(object.hash, hash)
     t.falsy(object.removed)
 })
 
@@ -58,7 +60,7 @@ test("update object", t => {
         uuid: object.uuid,
         hash: newHash,
         version: newVersion,
-        data: newData
+        data: newData,
     })
     t.is(result.uuid, t.context.uuids[0])
     t.is(result.version, newVersion)

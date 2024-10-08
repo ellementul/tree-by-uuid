@@ -24,7 +24,13 @@ const storage = new TreeByUuid
 #### Get item
 If object doesn't exist then return "undefined"
 ```js
-const object = storage.get(uuid)
+const { 
+    uuid, 
+    hash, 
+    version, 
+    data, 
+    isOutSync 
+} = storage.get(uuid)
 ```
 
 #### Upsert item
@@ -59,17 +65,17 @@ If object doesn't exist then return "undefined"
 const { uuid, version } = storage.remove(uuid)
 ```
 
-#### Get Hash Sector
+#### GetHashStorage
 ```js
-const { uuid, version } = storage.sectorHash(sectorPath)
+
+const storageHash = storage.hash
+
 ```
 
-#### GetIsSynced
+#### Sync Item
 ```js
-const isSynced = storage.getSyncedHash(sectorPath)
-```
+storage.sync(uuid)
+storage.outSync(uuid)
 
-#### SetIsSynced
-```js
-storage.setSyncedHash(sectorPath, isSynced)
+const outSyncItemUuid = storage.getOutSync()
 ```

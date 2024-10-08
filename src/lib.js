@@ -1,67 +1,170 @@
 import uuidHash from "uuid-by-string"
 import { parse as uuidParse } from "uuid"
 
-export class TreeByUuid {
-    constructor(hashFunction) {
-        this.hashing = hashFunction || uuidHash
+const REMOVED_HASH = uuidHash("removed")
+const RESTORED_HASH = uuidHash("restored")
 
+export class TreeByUuid {
+    constructor() {
         this.objects = new Map
+
+        this.outSync = new Set
+
+        this.tree = new Branches
     }
 
-    get(uuid) {
-        return this.objects.get(uuid)
+    setHashInBranch(uuid, hash) {
+        const uuidBytes = uuidParse(uuid)
+
+        let branch = this.tree
+
+        for (let i = 0; i < 14; i++) {
+            const byte = uuidBytes[i]
+
+            if(!branch[byte]) {
+                branch[byte] = new Branches
+            }
+
+            branch = branch[byte]
+        }
+
+        const prevLastByte = uuidBytes[14]
+        if(!branch[prevLastByte]) {
+            branch[prevLastByte] = new Leaves
+        }
+        branch = branch[prevLastByte]
+
+        const lastByte = uuidBytes[15]
+        branch[lastByte] =  { hash }
+    }
+
+    getHashInBranch(uuid) {
+        const uuidBytes = uuidParse(uuid)
+        let branch = this.tree
+
+        for (let i = 0; i < 15; i++) {
+            const byte = uuidBytes[i]
+            branch = branch[byte]
+        }
+
+        const lastByte = uuidBytes[15]
+
+        return branch[lastByte].hash
     }
 
     upsert(object) {
         if(!this.objects.has(object.uuid))
-            return this.add(object)
+            return this._add(object)
         else
-            return this.update(object)
+            return this._update(object)
     }
 
-    add(object) {
-        object.version = this.hashing(object.uuid + object.hash)
-        object.uuidBytes = uuidParse(object.uuid)
-        this.objects.set(object.uuid, object)
+    get(uuid) {
+        const { version, data } = this.objects.get(uuid)
 
-        return  { uuid: object.uuid, version: object.version }
-    }
+        if(version) {
+            const hash = this.getHashInBranch(uuid)
+            const removed = hash === REMOVED_HASH
 
-    update(object) {
-        const oldObject = this.objects.get(object.uuid)
-        const newVersion = this.hashing(oldObject.version + oldObject.hash + object.hash)
-
-        if(!object.version)
-            object.version = newVersion
-
-        if(object.version !== newVersion) {
-            const newUuid = this.hashing(object.uuid + object.hash)
-            object.uuid = newUuid
-            object.uuidBytes = uuidParse(object.uuid)
+            return { uuid, hash, version, data, removed }
         }
+        
+        return
+    }
 
-        this.objects.set(object.uuid, object)
+    _add({ uuid, hash, version, data }) { 
 
-        return  { uuid: object.uuid, version: object.version }
+        if(!version)
+            version = uuidHash(uuid + hash)
+        
+        this.objects.set(uuid, { version, data })
+        this.setHashInBranch(uuid, hash)
+
+        return  { uuid, version }
+    }
+
+    _update({ uuid, hash, version, data }) {
+        if(version) {
+            const { version: selfVersion } = this.objects.get(uuid)
+            const selfHash = this.getHashInBranch(uuid)
+
+            if(version != uuidHash(selfVersion + selfHash + hash)) { // sended version isn't new
+                if(selfVersion != uuidHash(version + hash + selfHash)) // sended  version isn't old
+                    uuid = uuidHash(uuid + hash) // versions isn't comparable
+                else
+                    return { uuid, version: selfVersion } // sended version isn't old
+            }
+        }
+        else {
+            version = newVersion
+        }
+            
+
+        this.objects.set(uuid, { version, data })
+        this.setHashInBranch(uuid, hash)
+
+        return  { uuid, version }
     }
 
     overwrite(object) {
-        if(!object.version)
-            object.version = this.hashing(object.uuid + object.hash)
-
-        this.objects.set(object.uuid, object)
-
-        return  { uuid: object.uuid, version: object.version }
+        return this._add(object)
     }
 
     remove(uuid) {
         if(this.objects.has(uuid)) {
-            const object = this.objects.get(uuid)
-            object.removed = true
+            const hash = this.getHashInBranch(uuid)
 
-            return { uuid, version: object.version }
+            if(hash !== REMOVED_HASH) {
+                const item = this.objects.get(uuid)
+                const newHash = REMOVED_HASH
+                item.version = uuidHash(item.version + hash + newHash)
+                this.setHashInBranch(uuid, newHash)
+
+                return { uuid, version: item.version }
+            }
         }
 
         return null
+    }
+
+    restore(uuid) {
+        if(this.objects.has(uuid)) {
+            const hash = this.getHashInBranch(uuid)
+
+            if(hash == REMOVED_HASH) {
+                const item = this.objects.get(uuid)
+                const newHash = RESTORED_HASH
+                item.version = uuidHash(item.version + hash + newHash)
+                this.setHashInBranch(uuid, newHash)
+
+                return { uuid, version: item.version }
+            }
+        }
+
+        return null
+    }
+}
+
+class Branches extends Array {
+    constructor() {
+        super()
+
+        this.hash = uuidHash("")
+    }
+
+    clacHash() {
+
+    }
+}
+
+class Leaves extends Array {
+    constructor() {
+        super()
+
+        this.hash = uuidHash("")
+    }
+
+    clacHash() {
+
     }
 }
