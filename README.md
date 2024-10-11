@@ -36,11 +36,19 @@ const {
 #### Upsert item
 Add item or update.
 If item exist, it will compare old version and new version of object, and then update(or not if version older).
-If old version and new version is not comparable, then it return new uuid of created item with your version
-Version is hash of prev version + prev hash of data + new hash of data
+If old version and new version is not comparable, then it return isCollision = true
 
 ```js
+// Not Collision
 const { uuid, version } = storage.upsert({
+    uuid,
+    hash,
+    version,
+    data
+})
+
+//Collision
+const { isCollision, uuid, selfHash, receivedHash } = storage.upsert({
     uuid,
     hash,
     version,

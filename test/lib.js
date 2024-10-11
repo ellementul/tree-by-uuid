@@ -29,6 +29,11 @@ test("add new object", t => {
 
     t.is(result.uuid, uuid)
     t.is(result.version, version)
+
+    const { hash: hashRoot, isUpdated } = storage.syncHashRoot()
+    
+    t.true(isUpdated)
+    t.is(hashRoot, "da39a3ee-5e6b-5b0d-b255-bfef95601890")
 })
 
 test("get object", t => {
@@ -86,7 +91,7 @@ test("remove object", t => {
 })
 
 
-test("update object with wrong version", t => {
+test("collision version", t => {
     const storage = t.context.storage
 
     const newData = "BadBoy!"
@@ -101,11 +106,12 @@ test("update object with wrong version", t => {
         version: newVersion,
         data: newData
     })
-    t.not(result.uuid, t.context.uuids[0])
-    t.is(result.version, newVersion)
 
-    const updatedObject = storage.get(result.uuid)
-    t.is(updatedObject.data, newData)
+    t.true(result.isCollision)
+
+    t.is(result.uuid, t.context.uuids[0])
+    t.is(result.selfHash, object.hash)
+    t.is(result.receivedHash, newHash)
 })
 
 
@@ -129,4 +135,36 @@ test("overwrite object", t => {
 
     const updatedObject = storage.get(result.uuid)
     t.is(updatedObject.data, newData)
+})
+
+
+test("data without hash", t => {
+    const storage = t.context.storage
+
+    const newData = "BadBoy!"
+
+    const object = storage.get(t.context.uuids[0])
+
+    t.throws(
+        () => storage.upsert({
+            uuid: object.uuid,
+            data: newData
+        })
+    )
+})
+
+test("hash without data", t => {
+    const storage = t.context.storage
+
+    const newData = "BadBoy!"
+
+    const object = storage.get(t.context.uuids[0])
+    const newHash = getUuidByString(newData)
+
+    t.throws(
+        () => storage.upsert({
+            uuid: object.uuid,
+            hash: newHash
+        })
+    )
 })

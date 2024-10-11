@@ -9,11 +9,13 @@ export class TreeByUuid {
         this.objects = new Map
 
         this.outSync = new Set
-
+        
         this.tree = new Branches
+
+        this.isUpdated = false
     }
 
-    setHashInBranch(uuid, hash) {
+    setHashOfItem(uuid, hash) {
         const uuidBytes = uuidParse(uuid)
 
         let branch = this.tree
@@ -36,23 +38,54 @@ export class TreeByUuid {
 
         const lastByte = uuidBytes[15]
         branch[lastByte] =  { hash }
-    }
 
-    getHashInBranch(uuid) {
-        const uuidBytes = uuidParse(uuid)
-        let branch = this.tree
-
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 14; i++) {
             const byte = uuidBytes[i]
+
+            if(!branch[byte]) {
+                branch[byte] = new Branches
+            }
+
             branch = branch[byte]
         }
 
-        const lastByte = uuidBytes[15]
+        this.isUpdated = true
+    }
+
+    syncHashRoot() {
+        const isUpdated = this.isUpdated
+        this.isUpdated = false
+
+        return { hash: this.tree.hash, isUpdated }
+    }
+
+    getHashOfBranch(partOfUuidBytes) {
+        const partLen = partOfUuidBytes.length
+        let branch = this.tree
+
+        for (let i = 0; i < partLen - 1; i++) {
+            const byte = partOfUuidBytes[i]
+            branch = branch[byte]
+        }
+
+        const lastByte = partOfUuidBytes[partLen - 1]
 
         return branch[lastByte].hash
     }
 
+    getHashOfItem(uuid) {
+        const uuidBytes = uuidParse(uuid)
+
+        return this.getHashOfBranch(uuidBytes)
+    }
+
     upsert(object) {
+        if(!object.hash && object.data)
+            throw new TypeError("Hash is empty, Data isn't")
+
+        if(object.hash && !object.data)
+            throw new TypeError("Data is empty, Hash isn't")
+
         if(!this.objects.has(object.uuid))
             return this._add(object)
         else
@@ -63,7 +96,7 @@ export class TreeByUuid {
         const { version, data } = this.objects.get(uuid)
 
         if(version) {
-            const hash = this.getHashInBranch(uuid)
+            const hash = this.getHashOfItem(uuid)
             const removed = hash === REMOVED_HASH
 
             return { uuid, hash, version, data, removed }
@@ -78,47 +111,65 @@ export class TreeByUuid {
             version = uuidHash(uuid + hash)
         
         this.objects.set(uuid, { version, data })
-        this.setHashInBranch(uuid, hash)
+        this.setHashOfItem(uuid, hash)
 
         return  { uuid, version }
     }
 
     _update({ uuid, hash, version, data }) {
-        if(version) {
-            const { version: selfVersion } = this.objects.get(uuid)
-            const selfHash = this.getHashInBranch(uuid)
+        const { version: selfVersion } = this.objects.get(uuid)
+        const selfHash = this.getHashOfItem(uuid)
 
-            if(version != uuidHash(selfVersion + selfHash + hash)) { // sended version isn't new
-                if(selfVersion != uuidHash(version + hash + selfHash)) // sended  version isn't old
-                    uuid = uuidHash(uuid + hash) // versions isn't comparable
+        let isCollision = false
+
+        if(hash == selfHash)
+            return { uuid, version }
+
+        if(version) {
+            const isNewVersion = version == uuidHash(selfVersion + selfHash + hash)
+
+            if(!isNewVersion) {
+                const isOldVersion = selfVersion == uuidHash(version + hash + selfHash)
+
+                if(!isOldVersion)
+                    isCollision = true
                 else
-                    return { uuid, version: selfVersion } // sended version isn't old
+                    version = selfVersion
             }
         }
         else {
-            version = newVersion
+            version = uuidHash(selfVersion + selfHash + hash)
         }
             
 
-        this.objects.set(uuid, { version, data })
-        this.setHashInBranch(uuid, hash)
+        if(!isCollision && version != selfVersion) {
+            this.objects.set(uuid, { version, data })
+            this.setHashOfItem(uuid, hash)
+        }
+        
 
-        return  { uuid, version }
+        return  { uuid, version, isCollision, selfHash, receivedHash: hash }
     }
 
     overwrite(object) {
+        if(!object.hash && object.data)
+            throw new TypeError("Hash is empty, Data isn't")
+
+        if(object.hash && !object.data)
+            throw new TypeError("Data is empty, Hash isn't")
+
         return this._add(object)
     }
 
     remove(uuid) {
         if(this.objects.has(uuid)) {
-            const hash = this.getHashInBranch(uuid)
+            const hash = this.getHashOfItem(uuid)
 
             if(hash !== REMOVED_HASH) {
                 const item = this.objects.get(uuid)
                 const newHash = REMOVED_HASH
                 item.version = uuidHash(item.version + hash + newHash)
-                this.setHashInBranch(uuid, newHash)
+                this.setHashOfItem(uuid, newHash)
 
                 return { uuid, version: item.version }
             }
@@ -129,13 +180,13 @@ export class TreeByUuid {
 
     restore(uuid) {
         if(this.objects.has(uuid)) {
-            const hash = this.getHashInBranch(uuid)
+            const hash = this.getHashOfItem(uuid)
 
             if(hash == REMOVED_HASH) {
                 const item = this.objects.get(uuid)
                 const newHash = RESTORED_HASH
                 item.version = uuidHash(item.version + hash + newHash)
-                this.setHashInBranch(uuid, newHash)
+                this.setHashOfItem(uuid, newHash)
 
                 return { uuid, version: item.version }
             }
@@ -153,7 +204,9 @@ class Branches extends Array {
     }
 
     clacHash() {
-
+        for (const item of this) {
+            console.log(item)
+        }
     }
 }
 
