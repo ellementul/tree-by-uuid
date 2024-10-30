@@ -5,7 +5,7 @@ import { TreeByUuid } from "../src/lib.js"
 
 test.before("constructor", t => {
     t.context.storage = new TreeByUuid
-    t.context.uuids = [getUuidByString("u-u-i-d")]
+    t.context.uuids = [getUuidByString("u-u-i-d"), getUuidByString("second")]
 })
 
 test("constructor", t => {
@@ -135,6 +135,26 @@ test("overwrite object", t => {
 
     const updatedObject = storage.get(result.uuid)
     t.is(updatedObject.data, newData)
+})
+
+test("create empty object and overwrite", t => {
+    const storage = t.context.storage
+
+    const uuid = t.context.uuids[1]
+
+    const result = storage.upsert({ uuid })
+
+    t.is(result.uuid, t.context.uuids[1])
+
+    const data = "RealData"
+    const hash = getUuidByString(data)
+    const version = getUuidByString("version")
+
+    const overResult = storage.upsert({ uuid, version, hash, data })
+
+    t.is(overResult.uuid, t.context.uuids[1])
+    t.falsy(overResult.isCollision)
+    t.is(overResult.version, version)    
 })
 
 

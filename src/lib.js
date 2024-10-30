@@ -1,6 +1,7 @@
 import uuidHash from "uuid-by-string"
 import { parse as uuidParse } from "uuid"
 
+const ZERO_HASH = uuidHash("")
 const REMOVED_HASH = uuidHash("removed")
 const RESTORED_HASH = uuidHash("restored")
 
@@ -79,17 +80,31 @@ export class TreeByUuid {
         return this.getHashOfBranch(uuidBytes)
     }
 
-    upsert(object) {
-        if(!object.hash && object.data)
+    upsert({ uuid, hash, version, data }) {
+        if(!hash && data)
             throw new TypeError("Hash is empty, Data isn't")
 
-        if(object.hash && !object.data)
+        if(hash && !data)
             throw new TypeError("Data is empty, Hash isn't")
 
-        if(!this.objects.has(object.uuid))
-            return this._add(object)
-        else
-            return this._update(object)
+        if(!hash && !data) {
+            data = ""
+            hash = ZERO_HASH
+        }
+
+
+        if(!this.objects.has(uuid)) {
+            return this._add({ uuid, hash, version, data })
+        }
+        else {
+            const { version: selfVersion } = this.objects.get(uuid)
+
+            if(selfVersion == uuidHash(uuid + ZERO_HASH))
+                return this._add({ uuid, hash, version, data })
+            else
+                return this._update({ uuid, hash, version, data, selfVersion })
+        }
+            
     }
 
     get(uuid) {
@@ -116,14 +131,11 @@ export class TreeByUuid {
         return  { uuid, version }
     }
 
-    _update({ uuid, hash, version, data }) {
-        const { version: selfVersion } = this.objects.get(uuid)
+    _update({ uuid, hash, version, selfVersion, data }) {
+        
         const selfHash = this.getHashOfItem(uuid)
 
         let isCollision = false
-
-        if(hash == selfHash)
-            return { uuid, version }
 
         if(version) {
             const isNewVersion = version == uuidHash(selfVersion + selfHash + hash)
