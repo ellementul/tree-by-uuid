@@ -29,11 +29,6 @@ test("add new object", t => {
 
     t.is(result.uuid, uuid)
     t.is(result.version, version)
-
-    const { hash: hashRoot, isUpdated } = storage.syncHashRoot()
-    
-    t.true(isUpdated)
-    t.is(hashRoot, "da39a3ee-5e6b-5b0d-b255-bfef95601890")
 })
 
 test("get object", t => {
