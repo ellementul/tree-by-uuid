@@ -81,6 +81,34 @@ test("update object", t => {
     t.true(storage.syncRoot().isUpdated)
 })
 
+test("fake update object(is not data)", t => {
+    const storage = t.context.storage
+
+    const { uuid } = storage.get(t.context.uuids[0])
+    storage.upsert({ uuid })
+
+    t.false(storage.syncRoot().isUpdated)
+})
+
+test("fake update object(the same version)", t => {
+    const storage = t.context.storage
+
+    const newData = "Bay!"
+
+    const object = storage.get(t.context.uuids[0])
+    const newHash = getUuidByString(newData)
+    const newVersion = object.version
+
+    storage.upsert({
+        uuid: object.uuid,
+        hash: newHash,
+        version: newVersion,
+        data: newData,
+    })
+
+    t.false(storage.syncRoot().isUpdated)
+})
+
 test("remove object", t => {
     const storage = t.context.storage
 
@@ -137,10 +165,8 @@ test("collision version", t => {
     t.true(result.isCollision)
 
     t.is(result.uuid, t.context.uuids[0])
-    t.is(result.selfHash, object.hash)
-    t.is(result.receivedHash, newHash)
 
-    t.true(storage.syncRoot().isUpdated)
+    t.false(storage.syncRoot().isUpdated)
 })
 
 

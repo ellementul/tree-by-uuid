@@ -75,6 +75,4 @@ test("Diff Hash to Item", t => {
     t.false(tree.getHash(uuid, 13) == hash13)
     t.false(tree.getHash(uuid, 14) == hash14)
     t.true(tree.getHash(uuid, 15) == hash15)
-
-    console.log(tree.getHash(uuid, 1), hash1)
 })

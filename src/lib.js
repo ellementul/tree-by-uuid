@@ -34,23 +34,25 @@ export class TreeByUuid {
         if(!hash && !data) {
             data = ""
             hash = ZERO_HASH
+            version = uuidHash(uuid + ZERO_HASH)
         }
 
 
-        if(!this.objects.has(uuid)) {
+        if(!this.objects.has(uuid))
             return this._add({ uuid, hash, version, data })
-        }
-        else {
-            const { version: selfVersion } = this.objects.get(uuid)
-
-            if(selfVersion == uuidHash(uuid + ZERO_HASH))
-                return this._add({ uuid, hash, version, data })
-            else
-                return this._update({ uuid, hash, version, data, selfVersion })
-        }
+        else
+            return this._update({ 
+                uuid, 
+                hash, 
+                version,
+                data
+            })
     }
 
     get(uuid) {
+        if(!this.objects.has(uuid))
+            return
+
         const { version, data } = this.objects.get(uuid)
 
         if(version) {
@@ -59,8 +61,6 @@ export class TreeByUuid {
 
             return { uuid, hash, version, data, removed }
         }
-        
-        return
     }
 
     _add({ uuid, hash, version, data }) { 
@@ -76,37 +76,38 @@ export class TreeByUuid {
         return  { uuid, version }
     }
 
-    _update({ uuid, hash, version, selfVersion, data }) {
-        
+    _update({ uuid, hash, version, data }) {
+        const { version: selfVersion } = this.objects.get(uuid)
         const selfHash = this.tree.getHash(uuid)
-
+        
+        let isNeedUpdated = true
         let isCollision = false
 
-        if(version) {
-            const isNewVersion = version == uuidHash(selfVersion + selfHash + hash)
+        if(!version)
+            version = uuidHash(selfVersion + selfHash + hash)
 
-            if(!isNewVersion) {
-                const isOldVersion = selfVersion == uuidHash(version + hash + selfHash)
+        if (hash == ZERO_HASH && version == uuidHash(uuid + ZERO_HASH))
+            isNeedUpdated = false
 
-                if(!isOldVersion)
-                    isCollision = true
-                else
-                    version = selfVersion
+        // It is not new version
+        if(version != uuidHash(selfVersion + selfHash + hash) && selfVersion != uuidHash(uuid + ZERO_HASH)) {
+            isNeedUpdated = false
+
+            // And it is not old version
+            if(selfVersion != uuidHash(version + hash + selfHash)) {
+                isCollision = true
+                version = selfVersion
             }
         }
-        else {
-            version = uuidHash(selfVersion + selfHash + hash)
-        }
-            
 
-        if(!isCollision && version != selfVersion) {
+        if(isNeedUpdated && version != selfVersion) {
             this.objects.set(uuid, { version, data })
             this.tree.setHash(uuid, hash)
-        }
-        
-        this._isUpdated = true
 
-        return  { uuid, version, isCollision, selfHash, receivedHash: hash }
+            this._isUpdated = true
+        }
+
+        return  { uuid, version, isCollision }
     }
 
     overwrite(object) {
