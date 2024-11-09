@@ -10,6 +10,8 @@ test.before("constructor", t => {
 
 test("constructor", t => {
     t.truthy(t.context.storage)
+
+    t.false(t.context.storage.syncRoot().isUpdated)
 })
 
 test("add new object", t => {
@@ -29,6 +31,12 @@ test("add new object", t => {
 
     t.is(result.uuid, uuid)
     t.is(result.version, version)
+
+    const { hash: rootHash, isUpdated } = storage.syncRoot()
+
+    t.truthy(rootHash)
+    t.true(isUpdated)
+    t.false(storage.syncRoot().isUpdated) // second sync is not updated
 })
 
 test("get object", t => {
@@ -45,6 +53,8 @@ test("get object", t => {
     t.is(object.data, data)
     t.is(object.hash, hash)
     t.falsy(object.removed)
+
+    t.false(storage.syncRoot().isUpdated)
 })
 
 test("update object", t => {
@@ -67,6 +77,8 @@ test("update object", t => {
 
     const updatedObject = storage.get(t.context.uuids[0])
     t.is(updatedObject.data, newData)
+
+    t.true(storage.syncRoot().isUpdated)
 })
 
 test("remove object", t => {
@@ -83,6 +95,26 @@ test("remove object", t => {
     const object = storage.get(uuid)
 
     t.true(object.removed)
+
+    t.true(storage.syncRoot().isUpdated)
+})
+
+test("restore object", t => {
+    const storage = t.context.storage
+
+    const uuid = t.context.uuids[0]
+
+    const result = storage.restore(uuid)
+
+    t.truthy(result.uuid)
+    t.truthy(result.version)
+
+
+    const object = storage.get(uuid)
+
+    t.false(object.removed)
+
+    t.true(storage.syncRoot().isUpdated)
 })
 
 
@@ -107,6 +139,8 @@ test("collision version", t => {
     t.is(result.uuid, t.context.uuids[0])
     t.is(result.selfHash, object.hash)
     t.is(result.receivedHash, newHash)
+
+    t.true(storage.syncRoot().isUpdated)
 })
 
 
@@ -130,6 +164,8 @@ test("overwrite object", t => {
 
     const updatedObject = storage.get(result.uuid)
     t.is(updatedObject.data, newData)
+
+    t.true(storage.syncRoot().isUpdated)
 })
 
 test("create empty object and overwrite", t => {
@@ -149,7 +185,9 @@ test("create empty object and overwrite", t => {
 
     t.is(overResult.uuid, t.context.uuids[1])
     t.falsy(overResult.isCollision)
-    t.is(overResult.version, version)    
+    t.is(overResult.version, version)
+    
+    t.true(storage.syncRoot().isUpdated)
 })
 
 

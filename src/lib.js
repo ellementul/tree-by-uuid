@@ -13,7 +13,15 @@ export class TreeByUuid {
         
         this.tree = new Tree
 
-        this.isUpdated = false
+        this._isUpdated = false
+    }
+
+    syncRoot() {
+        const result = { hash: this.tree.getHash(), isUpdated: this._isUpdated }
+
+        this._isUpdated = false
+
+        return result
     }
 
     upsert({ uuid, hash, version, data }) {
@@ -40,7 +48,6 @@ export class TreeByUuid {
             else
                 return this._update({ uuid, hash, version, data, selfVersion })
         }
-            
     }
 
     get(uuid) {
@@ -63,6 +70,8 @@ export class TreeByUuid {
         
         this.objects.set(uuid, { version, data })
         this.tree.setHash(uuid, hash)
+
+        this._isUpdated = true
 
         return  { uuid, version }
     }
@@ -95,6 +104,7 @@ export class TreeByUuid {
             this.tree.setHash(uuid, hash)
         }
         
+        this._isUpdated = true
 
         return  { uuid, version, isCollision, selfHash, receivedHash: hash }
     }
@@ -119,6 +129,8 @@ export class TreeByUuid {
                 item.version = uuidHash(item.version + hash + newHash)
                 this.tree.setHash(uuid, newHash)
 
+                this._isUpdated = true
+
                 return { uuid, version: item.version }
             }
         }
@@ -135,6 +147,8 @@ export class TreeByUuid {
                 const newHash = RESTORED_HASH
                 item.version = uuidHash(item.version + hash + newHash)
                 this.tree.setHash(uuid, newHash)
+
+                this._isUpdated = true
 
                 return { uuid, version: item.version }
             }
