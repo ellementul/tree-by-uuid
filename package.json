@@ -16,7 +16,9 @@
         "test": "clear && ava"
     },
     "dependencies": {
-        "@ellementul/uee-core": "^3.6.0",
+        "@ellementul/uee-core": "^4.0.0",
+        "hex-encoding": "^2.0.2",
+        "sha1": "^1.1.1",
         "uuid": "^10.0.0",
         "uuid-by-string": "^4.0.0"
     },

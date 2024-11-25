@@ -6,28 +6,37 @@ import syncRootEvent from "../src/events/syncRootEvent.js"
 import readyEvent from "../src/events/readyStorageEvent.js"
 import upsertEvent from "../src/events/upsertItemEvent.js"
 
+function testSubEvent(storage, event) {
+    const callback = Sinon.fake()
+    storage.subscribe(event, callback, "test")
 
-test("sync after connection", t => {
+    return callback
+}
+
+test.beforeEach('init member', t => {
     const storage = new StorageMember("testStorage", true)
     storage.makeRoom()
 
-    const callback = Sinon.fake()
-    storage.subscribe(syncRootEvent, callback, "test")
+    t.context.storage = storage
+})
+
+test("sync after connection", t => {
+    const storage = t.context.storage
+
+    const callback = testSubEvent(storage, syncRootEvent)
 
     storage.onConnectRoom()
 
-    t.true(callback.calledOnce)
+    t.is(callback.callCount, 1)
     t.is(callback.args[0][0].rootHash, "da39a3ee-5e6b-5b0d-b255-bfef95601890")
 })
 
 
 test("ready after sync", t => {
-    const storage = new StorageMember("testStorage", true)
-    storage.makeRoom()
+    const storage = t.context.storage
     storage.onConnectRoom()
 
-    const callback = Sinon.fake()
-    storage.subscribe(readyEvent, callback)
+    const callback = testSubEvent(storage, readyEvent)
 
     storage.send(syncRootEvent, {
         storageType: "testStorage",
@@ -38,14 +47,12 @@ test("ready after sync", t => {
 })
 
 test("add item for one storage", t => {
-    const storage = new StorageMember("testStorage", true)
-    storage.makeRoom()
+    const storage = t.context.storage
     storage.onConnectRoom()
 
-    const callback = Sinon.fake()
-    storage.subscribe(readyEvent, callback)
+    const callback = testSubEvent(storage, readyEvent)
 
-    storage.send(upsertEvent)
+    storage.send(upsertEvent, { storageType: "testStorage" })
 
     t.true(callback.called)
 })

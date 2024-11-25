@@ -3,10 +3,10 @@ import { Types, EventFactory } from "@ellementul/uee-core"
 export default EventFactory(
     Types.Object.Def({
         system: "storage",
-        action: "upsertItem",
+        action: "syncBranch",
         storageType: Types.Key.Def(),
-        item: Types.Object.Def({
-            uuid: Types.UUID.Def()
-        }, true)
+        uuid: Types.UUID.Def(),
+        length: Types.Index.Def(16),
+        hash: Types.UUID.Def()
     })
 )

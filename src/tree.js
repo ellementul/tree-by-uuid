@@ -1,5 +1,9 @@
-import uuidHash from "uuid-by-string"
-import { parse as uuidParse } from "uuid"
+import Hex from 'hex-encoding'
+import sha1 from 'sha1'
+
+import { Types } from "@ellementul/uee-core"
+
+const genByte = Types.Index.Def(256).rand
 
 export class Tree {
 
@@ -7,51 +11,61 @@ export class Tree {
         this.root = new Branches 
     }
 
-    setHash(uuid, hash) {
-        const uuidBytes = uuidParse(uuid)
-
+    getNewTUID() {
         let branch = this.root
+        const TUIDBytes = []
 
-        for (let i = 0; i < 14; i++) {
-            const byte = uuidBytes[i]
+        while(true) {
+            const randomByte = genByte()
+            TUIDBytes.push(randomByte)
 
-            if(!branch[byte]) {
-                branch[byte] = new Branches(branch)
-            }
+            if(!branch[randomByte])
+                break
 
-            branch = branch[byte]
+            branch = branch[randomByte]
         }
 
-        const prevLastByte = uuidBytes[14]
-        if(!branch[prevLastByte]) {
-            branch[prevLastByte] = new Leaves(branch)
-        }
-        branch = branch[prevLastByte]
-
-        const lastByte = uuidBytes[15]
-        branch[lastByte] = hash
-
-        branch.clacHash()
+        const TUID = Hex.encode(TUIDBytes)
+        return TUID
     }
 
-    getHash(uuid, len) {
-        if(!uuid)
+    getHash(tuid) {
+        if(!tuid)
             return this.root.hash
 
-        const uuidBytes = uuidParse(uuid)
-
-        const partLen = len || uuidBytes.length
+        const TUIDBytes = Hex.decode(tuid)
         let branch = this.root
 
-        for (let i = 0; i < partLen - 1; i++) {
-            const byte = uuidBytes[i]
+        for (let i = 0; i < TUIDBytes.length; i++) {
+            const byte = TUIDBytes[i]
+
+            if(!branch[byte])
+                return
+
             branch = branch[byte]
         }
 
-        const lastByte = uuidBytes[partLen - 1]
-
-        return branch[lastByte].hash || branch[lastByte]
+        return branch.hash
     }
+
+    setHash(tuid, hash) {
+        const TUIDBytes = Hex.decode(tuid)
+
+        let branch = this.root
+
+        for (let i = 0; i < TUIDBytes.length; i++) {
+            const byte = TUIDBytes[i]
+
+            if(!branch[byte])
+                branch[byte] = new Branches(branch)
+
+            branch = branch[byte]
+        }
+
+        branch.setHash(hash)
+    }
+
+    
 }
 
 
@@ -61,7 +75,7 @@ class Branches extends Array {
 
         this.parent = parent || null
 
-        this.hash = uuidHash("")
+        this.hash = sha1("")
     }
 
     clacHash() {
@@ -70,32 +84,17 @@ class Branches extends Array {
         for (let i = 0; i < this.length; i++)
             unitedString += this[i] ? this[i].hash : ""
 
-        this.hash = uuidHash(unitedString)
+        this.hash = sha1(unitedString)
 
         if(this.parent)
             this.parent.clacHash()
     }
-}
 
-class Leaves extends Array {
-    constructor(parent) {
-        super()
+    setHash(hash) {
+        if(!this.parent)
+            throw new Error("You can't set hash for root!")
 
-        this.parent = parent || null
-
-        this.hash = uuidHash("")
-    }
-
-    clacHash() {
-
-        let unitedString = ""
-
-        for (let i = 0; i < this.length; i++)
-            unitedString += this[i] ? this[i] : ""
-
-        this.hash = uuidHash(unitedString)
-
-        if(this.parent)
-            this.parent.clacHash()
+        this.hash = hash
+        this.parent.clacHash()
     }
 }

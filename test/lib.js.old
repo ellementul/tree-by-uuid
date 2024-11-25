@@ -57,6 +57,16 @@ test("get object", t => {
     t.false(storage.syncRoot().isUpdated)
 })
 
+test("get object is not existed", t => {
+    const storage = t.context.storage
+
+    const uuid = getUuidByString(t.context.uuids[0])
+
+    const object = storage.get(uuid)
+
+    t.falsy(object.uuid)
+})
+
 test("update object", t => {
     const storage = t.context.storage
 

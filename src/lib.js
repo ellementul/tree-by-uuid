@@ -24,6 +24,10 @@ export class TreeByUuid {
         return result
     }
 
+    syncBranch({ uuid, length, hash }) {
+        return this.tree.syncBranch(uuid, length, hash)
+    }
+
     upsert({ uuid, hash, version, data }) {
         if(!hash && data)
             throw new TypeError("Hash is empty, Data isn't")
@@ -51,7 +55,7 @@ export class TreeByUuid {
 
     get(uuid) {
         if(!this.objects.has(uuid))
-            return
+            return {}
 
         const { version, data } = this.objects.get(uuid)
 
