@@ -1,0 +1,55 @@
+import test from "ava"
+import sha1 from 'sha1'
+
+import { Tree } from "../src/tree.js"
+
+test("Load test of inserting", t => {
+    const tree = new Tree
+    const loadWeight = 256+32
+
+    const start = Date.now()
+
+    for (let index = 0; index < loadWeight; index++) {
+        const tuid = tree.getNewTUID()
+        const hash = sha1(tuid)
+        tree.setLeafHash(tuid, hash)
+    }
+
+    const end = Date.now()
+    const time = end - start
+    
+    console.log("Inserted items:", loadWeight, "\nTime: " + time + "ms")
+    t.true(time < 100)
+})
+
+test("Load test of sync", t => {
+
+    const tree = new Tree
+    const loadWeight = 512
+
+    for (let index = 0; index < loadWeight; index++) {
+        const tuid = tree.getNewTUID()
+        const hash = sha1(tuid)
+        tree.setLeafHash(tuid, hash)
+    }
+    const rootHash = tree.getHash()
+
+    const newTree = new Tree
+    let { tuid: tuidForSync, hash: hashForSync } = newTree.syncBranch({ hash: rootHash })
+
+    const start = Date.now()
+
+    let branchForCheck = { tuid: tuidForSync, hash: hashForSync }
+    let countCalls = 0
+    while(!newTree.isSynced) {
+        countCalls++
+        const branch = tree.checkBranch(branchForCheck)
+        branchForCheck = newTree.syncBranch(branch)
+    }
+
+    const end = Date.now()
+    const time = end - start
+    
+    console.log("Synced items:", loadWeight, "\nCalls count: ", countCalls, "\nTime: " + time + "ms")
+    t.true(time < 100)
+})

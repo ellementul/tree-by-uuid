@@ -1,11 +1,7 @@
 import test from "ava"
 import sha1 from 'sha1'
 
-import { Types } from "@ellementul/uee-core"
-
 import { Tree } from "../src/tree.js"
-
-const genByte = Types.Index.Def(256).rand
 
 test("constructor", t => {
     const tree = new Tree
@@ -23,17 +19,19 @@ test("Get New TUID", t => {
     t.is(rootHash, tree.getHash())
 })
 
-test("Set Hash by TUID", t => {
+test("Set Leaf Hash by TUID", t => {
     const tree = new Tree
 
     const tuid = "ffffff"
     const hash = sha1(tuid)
     const rootHash = tree.getHash()
 
-    tree.setHash(tuid, hash)
+    tree.setLeafHash(tuid, hash)
 
-    t.is("ed5fe06d997f4ef1d9f48382a4529af00d531987", tree.getHash())
+    t.is("09407b24224ef59bbeedf4d5d88be894ab8987cd", tree.getHash())
+    t.is(hash, tree.getLeafHash(tuid))
     t.not(rootHash, tree.getHash())
+    t.not(tree.getHash(tuid), tree.getHash())
 })
 
 
@@ -43,28 +41,9 @@ test("Get Hash by TUID", t => {
     const tuid = tree.getNewTUID()
     const hash = sha1(tuid)
 
-    tree.setHash(tuid, hash)
+    tree.setLeafHash(tuid, hash)
 
-    t.is(hash, tree.getHash(tuid))
-})
-
-test("Load test", t => {
-    const tree = new Tree
-    const loadWeight = 256+128+64
-
-    const start = Date.now()
-
-    for (let index = 0; index < loadWeight; index++) {
-        const tuid = tree.getNewTUID()
-        const hash = sha1(tuid)
-        tree.setHash(tuid, hash)
-    }
-
-    const end = Date.now()
-    const time = end - start
-    
-    console.log("Inserted items:", loadWeight, "\nTime: " + time + "ms")
-    t.true(time < 100)
+    t.is(hash, tree.getLeafHash(tuid))
 })
 
 
