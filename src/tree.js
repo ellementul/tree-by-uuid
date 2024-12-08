@@ -3,7 +3,7 @@ import sha1 from 'sha1'
 
 import { Types } from "@ellementul/uee-core"
 
-const genByte = Types.Index.Def(256).rand
+const genRandomByte = Types.Index.Def(256).rand
 
 export class Tree {
 
@@ -17,41 +17,36 @@ export class Tree {
         return !this.root.isNeedSync
     }
 
-    getNewTUID() {
+    getNewTUID(prefix) {
         let branch = this.root
-        const TUIDBytes = []
 
+        const TUIDBytes = prefix ? Hex.decode(prefix) : []
+
+        let i = 0
         while(true) {
-            const randomByte = genByte()
-            TUIDBytes.push(randomByte)
+            let byte
+            
+            if(i < TUIDBytes.length){
+                byte = TUIDBytes[i]
+                i += 1
+            }
+            else {
+                byte = genRandomByte()
+                TUIDBytes.push(byte)
+            }
 
-            if(!branch[randomByte])
+            if(!branch[byte])
                 break
 
-            branch = branch[randomByte]
+            branch = branch[byte]
         }
 
         const TUID = Hex.encode(TUIDBytes)
         return TUID
     }
 
-    getHash(tuid) {
-        if(!tuid)
-            return this.root.hash
-
-        const TUIDBytes = Hex.decode(tuid)
-        let branch = this.root
-
-        for (let i = 0; i < TUIDBytes.length; i++) {
-            const byte = TUIDBytes[i]
-
-            if(!branch[byte])
-                return
-
-            branch = branch[byte]
-        }
-
-        return branch.hash
+    getRootHash() {
+        return this.root.hash
     }
 
     getLeafForSync() {

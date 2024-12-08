@@ -10,7 +10,7 @@ test("One leaf", t => {
     const hash = sha1(tuid)
     
     tree.setLeafHash(tuid, hash)
-    const rootHash = tree.getHash()
+    const rootHash = tree.getRootHash()
 
     const newTree = new Tree
 
@@ -36,7 +36,7 @@ test("Two leaves", t => {
     
     tree.setLeafHash(tree.getNewTUID(), hash)
     tree.setLeafHash(tree.getNewTUID(), hash)
-    const rootHash = tree.getHash()
+    const rootHash = tree.getRootHash()
 
     const newTree = new Tree
 

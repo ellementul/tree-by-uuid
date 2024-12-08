@@ -12,11 +12,22 @@ test("constructor", t => {
 test("Get New TUID", t => {
     const tree = new Tree
     
-    const rootHash = tree.getHash()
+    const rootHash = tree.getRootHash()
     const tuid = tree.getNewTUID()
 
     t.truthy(tuid)
-    t.is(rootHash, tree.getHash())
+    t.is(rootHash, tree.getRootHash())
+})
+
+test("Get New TUID by Prefix", t => {
+    const tree = new Tree
+    
+    const rootHash = tree.getRootHash()
+    const prefix = "ffe1"
+    const tuid = tree.getNewTUID(prefix)
+
+    t.is(prefix, tuid)
+    t.is(rootHash, tree.getRootHash())
 })
 
 test("Set Leaf Hash by TUID", t => {
@@ -24,14 +35,13 @@ test("Set Leaf Hash by TUID", t => {
 
     const tuid = "ffffff"
     const hash = sha1(tuid)
-    const rootHash = tree.getHash()
+    const rootHash = tree.getRootHash()
 
     tree.setLeafHash(tuid, hash)
 
-    t.is("09407b24224ef59bbeedf4d5d88be894ab8987cd", tree.getHash())
+    t.is("09407b24224ef59bbeedf4d5d88be894ab8987cd", tree.getRootHash())
     t.is(hash, tree.getLeafHash(tuid))
-    t.not(rootHash, tree.getHash())
-    t.not(tree.getHash(tuid), tree.getHash())
+    t.not(rootHash, tree.getRootHash())
 })
 
 
