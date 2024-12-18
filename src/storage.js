@@ -7,24 +7,43 @@ export const RESTORED_HASH = uuidHash("restored")
 export class TreeByUuid {
     constructor() {
         this.objects = new Map
-
-        this.outSync = new Set
         
         this.tree = new Tree
 
-        this._isUpdated = false
+        this.leavesForSync = new Set
     }
 
-    syncRoot() {
-        const result = { hash: this.tree.getHash(), isUpdated: this._isUpdated }
+    get isNeedSyncLeaves() {
+        return this.leavesForSync.size > 0
+    }
 
-        this._isUpdated = false
+    get isSyncRoot() {
+        return this.tree.isSynced
+    }
 
-        return result
+    getHashRoot() {
+        return this.tree.getRootHash()
+    }
+
+    syncHashRoot(hash) {
+        return this.tree.syncBranch({ hash })
+    }
+
+    checkBranch(branch) {
+        return this.tree.checkBranch(branch)
     }
 
     syncBranch({ tuid, hash, leafHash }) {
-        return this.tree.syncBranch({ tuid, hash, leafHash })
+        const resultSynced = this.tree.syncBranch({ tuid, hash, leafHash })
+
+        if(this.tree.isSynced)
+            this.leavesForSync = new Set(this.tree.getLeavesForSync())
+
+        return resultSynced
+    }
+
+    getNeededLeaves() {
+        return Array.from(this.leavesForSync)
     }
 
     get(tuid) {
@@ -53,6 +72,8 @@ export class TreeByUuid {
     addObject({ tuid, hash, data }) {
         const version = uuidHash(tuid + hash)
         
+        this.leavesForSync.delete(tuid)
+
         this.objects.set(tuid, { version, data })
         this.tree.setLeafHash(tuid, hash)
 

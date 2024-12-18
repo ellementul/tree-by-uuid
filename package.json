@@ -13,7 +13,8 @@
     "main": "src/index.js",
     "type": "module",
     "scripts": {
-        "test": "clear && ava"
+        "test": "clear && ava -s",
+        "test:loading": "clear && ava ./loading-test/index.js -s"
     },
     "dependencies": {
         "@ellementul/uee-core": "^4.0.0",

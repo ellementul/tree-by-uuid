@@ -26,7 +26,7 @@ test("One leaf", t => {
     }
 
     t.is(count, 5)
-    t.is(newTree.getLeafForSync(), tuid)
+    t.is(newTree.getLeavesForSync()[0], tuid)
 })
 
 test("Two leaves", t => {

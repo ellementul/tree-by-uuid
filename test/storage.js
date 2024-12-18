@@ -208,7 +208,6 @@ test("restore object", t => {
         data
     })
 
-    const removedVersion = getUuidByString(version + hash + REMOVED_HASH)
     const result = storage.remove(tuid)
 
     const restoreVersion = getUuidByString(result.version + REMOVED_HASH + RESTORED_HASH)
@@ -222,4 +221,14 @@ test("restore object", t => {
     t.is(object.hash, RESTORED_HASH)
     t.is(object.data, data)
     t.false(object.removed)
+})
+
+test("SelfSync", t => {
+    const storage = t.context.storage
+
+    t.false(storage.isSyncRoot)
+
+    storage.syncHashRoot(storage.getHashRoot())
+
+    t.true(storage.isSyncRoot)
 })

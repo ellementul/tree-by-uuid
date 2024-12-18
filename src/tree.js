@@ -49,8 +49,10 @@ export class Tree {
         return this.root.hash
     }
 
-    getLeafForSync() {
-        return this.leavesForSync.pop()
+    getLeavesForSync() {
+        const leaves = [...this.leavesForSync]
+        this.leavesForSync = []
+        return leaves
     }
 
     getLeafHash(tuid) {
