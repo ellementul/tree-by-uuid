@@ -1,4 +1,4 @@
-import uuidHash from "uuid-by-string"
+import uuidHash from 'sha1'
 import { Tree } from "./tree.js"
 
 export const REMOVED_HASH = uuidHash("removed")
@@ -44,6 +44,10 @@ export class TreeByUuid {
 
     getNeededLeaves() {
         return Array.from(this.leavesForSync)
+    }
+
+    has(tuid) {
+        return this.objects.has(tuid)
     }
 
     get(tuid) {

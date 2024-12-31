@@ -1,5 +1,5 @@
 import test from "ava"
-import getUuidByString from "uuid-by-string"
+import sha1 from 'sha1'
 
 import { REMOVED_HASH, RESTORED_HASH, TreeByUuid } from "../src/storage.js"
 
@@ -15,14 +15,14 @@ test("add new object", t => {
     const storage = t.context.storage
 
     const data = "Hello!"
-    const hash = getUuidByString(data)
+    const hash = sha1(data)
 
     const result = storage.addNewObject({
         hash,
         data
     })
 
-    const version = getUuidByString(result.tuid + hash)
+    const version = sha1(result.tuid + hash)
     t.is(result.version, version)
 
     const object = storage.get(result.tuid)
@@ -35,7 +35,7 @@ test("add new object", t => {
 test("get object is not existed", t => {
     const storage = t.context.storage
 
-    const uuid = getUuidByString("")
+    const uuid = sha1("")
 
     const object = storage.get(uuid)
 
@@ -46,7 +46,7 @@ test("update data", t => {
     const storage = t.context.storage
 
     const data = "Hello!"
-    const hash = getUuidByString(data)
+    const hash = sha1(data)
 
     const { tuid, version } = storage.addNewObject({
         hash,
@@ -54,7 +54,7 @@ test("update data", t => {
     })
 
     const newData = "Bay!"
-    const newHash = getUuidByString(newData)
+    const newHash = sha1(newData)
 
     const updateResult = storage.updateData({
         tuid,
@@ -62,7 +62,7 @@ test("update data", t => {
         data: newData
     })
 
-    const newVersion = getUuidByString(version + hash + newHash)
+    const newVersion = sha1(version + hash + newHash)
     t.is(updateResult.version, newVersion)
 
     const object = storage.get(tuid)
@@ -76,7 +76,7 @@ test("update object", t => {
     const storage = t.context.storage
 
     const data = "Hello!"
-    const hash = getUuidByString(data)
+    const hash = sha1(data)
 
     const { tuid, version } = storage.addNewObject({
         hash,
@@ -84,8 +84,8 @@ test("update object", t => {
     })
 
     const newData = "Bay!"
-    const newHash = getUuidByString(newData)
-    const newVersion = getUuidByString(version + hash + newHash)
+    const newHash = sha1(newData)
+    const newVersion = sha1(version + hash + newHash)
 
     const updateResult = storage.updateObject({
         tuid,
@@ -107,7 +107,7 @@ test("update object:collision", t => {
     const storage = t.context.storage
 
     const data = "Hello!"
-    const hash = getUuidByString(data)
+    const hash = sha1(data)
 
     const { tuid, version } = storage.addNewObject({
         hash,
@@ -115,8 +115,8 @@ test("update object:collision", t => {
     })
 
     const newData = "Bay!"
-    const newHash = getUuidByString(newData)
-    const newVersion = getUuidByString(version + hash + newHash + "for collision")
+    const newHash = sha1(newData)
+    const newVersion = sha1(version + hash + newHash + "for collision")
 
     const updateResult = storage.updateObject({
         tuid,
@@ -139,7 +139,7 @@ test("update object:older_version", t => {
     const storage = t.context.storage
 
     const data = "Hello!"
-    const hash = getUuidByString(data)
+    const hash = sha1(data)
 
     const { tuid, version } = storage.addNewObject({
         hash,
@@ -147,8 +147,8 @@ test("update object:older_version", t => {
     })
 
     const newData = "Bay!"
-    const newHash = getUuidByString(newData)
-    const newVersion = getUuidByString(version + hash + newHash)
+    const newHash = sha1(newData)
+    const newVersion = sha1(version + hash + newHash)
 
     storage.updateObject({
         tuid,
@@ -177,14 +177,14 @@ test("remove object", t => {
     const storage = t.context.storage
 
     const data = "Hello!"
-    const hash = getUuidByString(data)
+    const hash = sha1(data)
 
     const { tuid, version } = storage.addNewObject({
         hash,
         data
     })
 
-    const removedVersion = getUuidByString(version + hash + REMOVED_HASH)
+    const removedVersion = sha1(version + hash + REMOVED_HASH)
     const result = storage.remove(tuid)
     
     t.is(result.version, removedVersion)
@@ -201,7 +201,7 @@ test("restore object", t => {
     const storage = t.context.storage
 
     const data = "Hello!"
-    const hash = getUuidByString(data)
+    const hash = sha1(data)
 
     const { tuid, version } = storage.addNewObject({
         hash,
@@ -210,7 +210,7 @@ test("restore object", t => {
 
     const result = storage.remove(tuid)
 
-    const restoreVersion = getUuidByString(result.version + REMOVED_HASH + RESTORED_HASH)
+    const restoreVersion = sha1(result.version + REMOVED_HASH + RESTORED_HASH)
     const restoreResult = storage.restore(tuid)
     
     t.is(restoreResult.version, restoreVersion)
