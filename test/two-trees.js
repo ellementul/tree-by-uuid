@@ -14,8 +14,7 @@ test("One leaf", t => {
 
     const newTree = new Tree
 
-    let { tuid: tuidForSync, hash: hashForSync, isSynced } = newTree.syncBranch({ hash: rootHash })
-    t.false(isSynced)
+    let { tuid: tuidForSync, hash: hashForSync } = newTree.syncBranch({ hash: rootHash })
 
     let branchForCheck = { tuid: tuidForSync, hash: hashForSync }
     let count = 0 
@@ -40,8 +39,7 @@ test("Two leaves", t => {
 
     const newTree = new Tree
 
-    let { tuid: tuidForSync, hash: hashForSync, isSynced } = newTree.syncBranch({ hash: rootHash })
-    t.false(isSynced)
+    let { tuid: tuidForSync, hash: hashForSync } = newTree.syncBranch({ hash: rootHash })
 
     let branchForCheck = { tuid: tuidForSync, hash: hashForSync }
     let count = 0 

@@ -1,5 +1,5 @@
 import uuidHash from 'sha1'
-import { Tree } from "./tree.js"
+import { EMPTY_HASH, Tree } from "./tree.js"
 
 export const REMOVED_HASH = uuidHash("removed")
 export const RESTORED_HASH = uuidHash("restored")
@@ -19,6 +19,10 @@ export class TreeByUuid {
 
     get isSyncRoot() {
         return this.tree.isSynced
+    }
+
+    isEmptyHash(hash) {
+        return EMPTY_HASH == hash
     }
 
     getHashRoot() {

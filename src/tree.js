@@ -5,6 +5,8 @@ import { Types } from "@ellementul/uee-core"
 
 const genRandomByte = Types.Index.Def(256).rand
 
+export const EMPTY_HASH = sha1("")
+
 export class Tree {
 
     constructor() {
@@ -133,8 +135,7 @@ export class Tree {
         return { 
             tuid:  Hex.encode(TUIDBytes), 
             hash: branch.hash,
-            syncedChildren: branch.syncedChildren,
-            isSynced: !branch.isNeedSync 
+            syncedChildren: branch.syncedChildren
         }
     }
 
@@ -188,7 +189,7 @@ class Branch extends Array {
         this.children = []
         this.syncedChildren = []
 
-        this.hash = sha1("")
+        this.hash = EMPTY_HASH
 
         this.leafHash = null
 

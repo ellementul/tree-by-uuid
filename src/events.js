@@ -38,3 +38,43 @@ export const updateEvent = EventFactory(
         data: Types.Any.Def()
     })
 )
+
+export const removeEvent = EventFactory(
+    Types.Object.Def({
+        system: "storage",
+        action: "removeItem",
+        storageType: Types.Key.Def(),
+        tuid: Types.Key.Def()
+    })
+)
+
+export const restoreEvent = EventFactory(
+    Types.Object.Def({
+        system: "storage",
+        action: "restoreItem",
+        storageType: Types.Key.Def(),
+        tuid: Types.Key.Def()
+    })
+)
+
+export const checkEvent = EventFactory(
+    Types.Object.Def({
+        system: "storage",
+        action: "checkBranch",
+        storageType: Types.Key.Def(),
+        tuid: Types.Key.Def(),
+        hash: Types.Key.Def(),
+        syncedChildren: Types.Any.Def()
+    })
+)
+
+export const syncEvent = EventFactory(
+    Types.Object.Def({
+        system: "storage",
+        action: "syncBranch",
+        storageType: Types.Key.Def(),
+        tuid: Types.Key.Def(),
+        hash: Types.Key.Def(),
+        leafHash: Types.Key.Def()
+    })
+)
