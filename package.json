@@ -1,6 +1,6 @@
 {
     "name": "@ellementul/tree-by-uuid",
-    "version": "0.3.0",
+    "version": "0.7.0",
     "description": "Shared storage for data",
     "repository": {
         "type": "git",
@@ -17,7 +17,7 @@
         "test:loading": "clear && ava ./loading-test/index.js -s"
     },
     "dependencies": {
-        "@ellementul/uee-core": "^5.0.0",
+        "@ellementul/uee-core": "^6.0.0",
         "hex-encoding": "^2.0.2",
         "sha1": "^1.1.1",
         "uuid": "^10.0.0",
