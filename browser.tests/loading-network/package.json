@@ -1,0 +1,12 @@
+{
+    "type": "module",
+    "source": ["./index.html", "./client.html"], 
+    "@parcel/resolver-default": {
+        "packageExports": true
+    },
+    "alias": {
+        "sinon": "../../node_modules/sinon",
+        "@ellementul/uee-core": "../../node_modules/@ellementul/uee-core",
+        "@ellementul/uee-transport-peerjs": "../../node_modules/@ellementul/uee-transport-peerjs"
+    }
+}
