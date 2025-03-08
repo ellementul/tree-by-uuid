@@ -10,6 +10,8 @@ export class StorageMember extends MemberFactory {
         this._storageType = storageType
 
         this.db = new TreeByUuid
+
+        this.isReady = false
     }
 
     checkType(event) {
@@ -22,7 +24,7 @@ export class StorageMember extends MemberFactory {
         super.send(event, payload)
     }
 
-    onConnectRoom() {
+    init() {
         this.subscribe(requestEvent,    event => this.checkType(event) && this.request(event))
         this.subscribe(addEvent,        event => this.checkType(event) && this.addItem(event))
         this.subscribe(upsertEvent,     event => this.checkType(event) && this.upsert(event))
@@ -38,6 +40,20 @@ export class StorageMember extends MemberFactory {
 
         this.subscribe(syncEvent, event => this.checkType(event) && this.sync(event))
         this.subscribe(checkEvent, event => this.checkType(event) && this.check(event))
+    }
+
+    onMakeRoom() {
+        if(this.isReady) return
+
+        this.isReady = true
+        this.init()
+    }
+
+    onJoinRoom() {
+        if(this.isReady) return
+
+        this.isReady = true
+        this.init()
     }
 
     sync({ tuid, hash, leafHash }) {

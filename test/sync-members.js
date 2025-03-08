@@ -16,7 +16,6 @@ test.before(t => {
     const storageType = "Testing"
     const room = new StorageMember(storageType)
     room.makeRoom()
-    room.onConnectRoom()
     t.context.room = room
 
     const subRoom = new MemberFactory
