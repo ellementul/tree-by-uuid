@@ -1,5 +1,5 @@
-import Hex from 'hex-encoding'
 import sha1 from 'sha1'
+import { Hex } from "./hex.js"
 
 import { Types } from "@ellementul/uee-core"
 
