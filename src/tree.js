@@ -11,12 +11,17 @@ export class Tree {
 
     constructor() {
         this.root = new Branch
+        this.root.isNeedSync = false
         
         this.leavesForSync = []
     }
 
     get isSynced() {
         return !this.root.isNeedSync
+    }
+
+    resyncRoot() {
+        this.root.isNeedSync = true
     }
 
     getNewTUID(prefix) {
@@ -191,7 +196,7 @@ class Branch extends Array {
 
         this.hash = EMPTY_HASH
 
-        this.leafHash = null
+        this.leafHash = ""
 
         this._isNeedSync = true
     }

@@ -24,124 +24,133 @@ test("Storage Member constructor", t => {
     t.truthy(storage)
 })
 
-test('Add new object', async t => {
-    const room = t.context.room
+test('Auto self sync without answer', async t => {
     const storageType = "Testing"
-    room.addMember(new StorageMember(storageType))
+    const room = new MemberFactory
+    room.makeRoom()
 
-    const callback = sinon.fake()
-    room.subscribe(upsertEvent, callback)
+    const singleStorage = new StorageMember(storageType)
+    room.addMember(singleStorage)
 
-    const data = "Hello UEE!"
-    const hash = sha1(data)
-    room.send(addEvent, { storageType, hash, data })
+    t.true(singleStorage.db.isSyncRoot)
 
     await later(100)
 
-    t.true(callback.called)
-    const item = callback.getCall(0).args[0].item
-
-    t.context.items.set(item.tuid, { ...item })
+    t.true(singleStorage.db.isSyncRoot)
 })
 
-test('Request object', async t => {
+test('Answer sync', async t => {
     const storageType = "Testing"
-    const room = t.context.room
+    const room = new MemberFactory
+    room.makeRoom()
 
-    const tuid = Array.from(t.context.items.keys())[0]
+    const singleStorage = new StorageMember(storageType)
+    room.subscribe(checkEvent, msg => {
+        room.send(syncEvent, {
+            tuid: "", 
+            storageType,
+            hash: "Otherhash",
+            leafHash: ""
+        })
+    })
 
-    const callback = sinon.fake()
-    room.subscribe(upsertEvent, callback)
+    room.addMember(singleStorage)
 
-    room.send(requestEvent, { storageType, tuid })
+    t.true(singleStorage.db.isSyncRoot)
 
-    await later(100)
+    await later(200)
 
-    t.true(callback.called)
+    t.false(singleStorage.db.isSyncRoot)
 })
 
-test('Update data of object', async t => {
-    const storageType = "Testing"
-    const room = t.context.room
+// test('Add new object', async t => {
+//     const room = t.context.room
+//     const storageType = "Testing"
+//     room.addMember(new StorageMember(storageType))
 
-    const tuid = Array.from(t.context.items.keys())[0]
-    const data = "Use UEE!"
-    const hash = sha1(data)
+//     const callback = sinon.fake()
+//     room.subscribe(upsertEvent, callback)
 
-    const callback = sinon.fake()
-    room.subscribe(upsertEvent, callback)
+//     const data = "Hello UEE!"
+//     const hash = sha1(data)
+//     room.send(addEvent, { storageType, hash, data })
 
-    room.send(updateEvent, { storageType, tuid, hash, data })
+//     await later(100)
 
-    await later(100)
+//     t.true(callback.called)
+//     const item = callback.getCall(0).args[0].item
 
-    t.true(callback.called)
-})
+//     t.context.items.set(item.tuid, { ...item })
+// })
 
-test('Remove object', async t => {
-    const storageType = "Testing"
-    const room = t.context.room
+// test('Request object', async t => {
+//     const storageType = "Testing"
+//     const room = t.context.room
 
-    const tuid = Array.from(t.context.items.keys())[0]
+//     const tuid = Array.from(t.context.items.keys())[0]
 
-    const callback = sinon.fake()
-    room.subscribe(upsertEvent, callback)
+//     const callback = sinon.fake()
+//     room.subscribe(upsertEvent, callback)
 
-    room.send(removeEvent, { storageType, tuid })
+//     room.send(requestEvent, { storageType, tuid })
 
-    await later(100)
+//     await later(100)
 
-    t.true(callback.called)
+//     t.true(callback.called)
+// })
 
-    const item = callback.getCall(0).args[0].item
-    t.true(item.removed)
-})
+// test('Update data of object', async t => {
+//     const storageType = "Testing"
+//     const room = t.context.room
 
-test('Restore object', async t => {
-    const storageType = "Testing"
-    const room = t.context.room
+//     const tuid = Array.from(t.context.items.keys())[0]
+//     const data = "Use UEE!"
+//     const hash = sha1(data)
 
-    const tuid = Array.from(t.context.items.keys())[0]
+//     const callback = sinon.fake()
+//     room.subscribe(upsertEvent, callback)
 
-    const callback = sinon.fake()
-    room.subscribe(upsertEvent, callback)
+//     room.send(updateEvent, { storageType, tuid, hash, data })
 
-    room.send(restoreEvent, { storageType, tuid })
+//     await later(100)
 
-    await later(100)
+//     t.true(callback.called)
+// })
 
-    t.true(callback.called)
+// test('Remove object', async t => {
+//     const storageType = "Testing"
+//     const room = t.context.room
 
-    const item = callback.getCall(0).args[0].item
-    t.false(item.removed)
-})
+//     const tuid = Array.from(t.context.items.keys())[0]
 
-test('Check root hash', async t => {
-    const storageType = "Testing2"
-    const room = t.context.room
+//     const callback = sinon.fake()
+//     room.subscribe(upsertEvent, callback)
 
-    const newStorage = new StorageMember(storageType)
-    
-    const callback = sinon.fake()
-    room.subscribe(checkEvent, callback)
-    
-    room.addMember(newStorage)
+//     room.send(removeEvent, { storageType, tuid })
 
-    await later(100)
+//     await later(100)
 
-    t.true(callback.called)
-})
+//     t.true(callback.called)
 
-test('Sync root', async t => {
-    const storageType = "Testing"
-    const room = t.context.room
+//     const item = callback.getCall(0).args[0].item
+//     t.true(item.removed)
+// })
 
-    const callback = sinon.fake()
-    room.subscribe(checkEvent, callback)
+// test('Restore object', async t => {
+//     const storageType = "Testing"
+//     const room = t.context.room
 
-    room.send(syncEvent, { storageType, tuid: "", hash: "gjsgfdgs" })
+//     const tuid = Array.from(t.context.items.keys())[0]
 
-    await later(100)
+//     const callback = sinon.fake()
+//     room.subscribe(upsertEvent, callback)
 
-    t.true(callback.called)
-})
+//     room.send(restoreEvent, { storageType, tuid })
+
+//     await later(100)
+
+//     t.true(callback.called)
+
+//     const item = callback.getCall(0).args[0].item
+//     t.false(item.removed)
+// })

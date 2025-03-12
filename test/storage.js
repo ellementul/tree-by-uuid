@@ -222,13 +222,3 @@ test("restore object", t => {
     t.is(object.data, data)
     t.false(object.removed)
 })
-
-test("SelfSync", t => {
-    const storage = t.context.storage
-
-    t.false(storage.isSyncRoot)
-
-    storage.syncHashRoot(storage.getHashRoot())
-
-    t.true(storage.isSyncRoot)
-})

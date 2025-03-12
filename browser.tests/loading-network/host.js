@@ -1,8 +1,10 @@
-import sinon from "sinon"
-import { EventFactory, Types, MemberFactory, connectionEvent, disconnectionEvent } from "@ellementul/uee-core"
+import sha1 from 'sha1'
+import { Types, MemberFactory, disconnectionEvent } from "@ellementul/uee-core"
 
 import { assertLog, later, successfulColor } from './test.utils.js'
 import { PeerJsTransport } from "@ellementul/uee-transport-peerjs"
+import { StorageMember } from "../../src/member.js"
+import { addEvent } from "../../src/events.js"
 
 export async function runTests() {
     const id = Types.UUID.Def().rand()
@@ -20,25 +22,22 @@ export async function runTests() {
     `)
 
     const room = new MemberFactory
+    // room.receiveAll = console.log
     room.makeRoom({ transport })
     room.connect()
 
-    const event = EventFactory(Types.Object.Def({ system: "test" }))
-    const secondEvent = EventFactory(Types.Object.Def({ system: "test2" }))
-    const callback = sinon.fake()
+    const storage = new StorageMember
+    room.addMember(storage)
 
-    room.subscribe(secondEvent, callback)
-
-    room.subscribe(connectionEvent, async () => {
-        assertLog("Host send message", true)
-        room.send(event)
-
-        await later(100)
-
-        assertLog("Host got message", callback.called)
-    })
+    fillStorage(storage)
 
     room.subscribe(disconnectionEvent, async () => {
         assertLog("Host disconnected", true)
     })
+}
+
+function fillStorage(storage) {
+    const data = "Hello UEE!"
+    const hash = sha1(data)
+    storage.send(addEvent, { hash, data })
 }

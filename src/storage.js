@@ -21,6 +21,10 @@ export class TreeByUuid {
         return this.tree.isSynced
     }
 
+    resyncRoot() {
+        this.tree.resyncRoot()
+    }
+
     isEmptyHash(hash) {
         return EMPTY_HASH == hash
     }

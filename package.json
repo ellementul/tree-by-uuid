@@ -18,8 +18,7 @@
         "test:browser": "npx parcel ./browser.tests/loading-network"
     },
     "dependencies": {
-        "@ellementul/uee-core": "^7.2.0",
-        "hex-encoding": "^2.0.2",
+        "@ellementul/uee-core": "^7.4.0",
         "sha1": "^1.1.1",
         "uuid": "^10.0.0",
         "uuid-by-string": "^4.0.0"

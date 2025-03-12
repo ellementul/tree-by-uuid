@@ -19,13 +19,17 @@ test.before(t => {
     t.context.room = room
 
     const subRoom = new MemberFactory
-    subRoom.makeRoom({ outEvents: [upsertEvent], inEvents: [upsertEvent] })
+    subRoom.makeRoom({ outEvents: [syncEvent, upsertEvent], inEvents: [checkEvent, upsertEvent] })
     room.addMember(subRoom)
 
     t.context.storage = new StorageMember(storageType)
     subRoom.addMember(t.context.storage)
 
     t.context.items = []
+})
+
+test('Synced two storages', async t => {
+    t.true(t.context.storage.db.isSyncRoot)
 })
 
 test('Add new object in bottom storage', async t => {
@@ -82,16 +86,12 @@ test('sync new storage', async t => {
     const newStorage = new StorageMember(storageType)
     room.addMember(newStorage)
 
-    await later(100)
-
     const callback = sinon.fake()
-    newStorage.subscribe(upsertEvent, callback)
-
-    newStorage.send(requestEvent, { tuid: t.context.items[0] })
-    newStorage.send(requestEvent, { tuid: t.context.items[1] })
+    room.subscribe(upsertEvent, callback)
 
     await later(100)
 
+    t.true(newStorage.db.isSyncRoot)
     t.true(callback.called)
     t.is(t.context.items[0], callback.getCall(0).firstArg.item.tuid)
     t.is(t.context.items[1], callback.getCall(1).firstArg.item.tuid)

@@ -1,4 +1,4 @@
-import { MemberFactory } from "@ellementul/uee-core"
+import { MemberFactory, connectionEvent } from "@ellementul/uee-core"
 import { addEvent, checkEvent, removeEvent, requestEvent, restoreEvent, syncEvent, updateEvent, upsertEvent } from "./events.js"
 import { TreeByUuid } from "./storage.js"
 
@@ -10,67 +10,93 @@ export class StorageMember extends MemberFactory {
         this._storageType = storageType
 
         this.db = new TreeByUuid
-
-        this.isReady = false
     }
 
-    checkType(event) {
-        return this._storageType === event.storageType
+    checkType(payload) {
+        return this._storageType === payload.storageType && payload.storageId != this._uuid
     }
 
     send(event, payload) {
-        payload.storageType = this._storageType
+        if(payload) {
+            payload.storageType = this._storageType
+        }
 
         super.send(event, payload)
     }
 
     init() {
+        this.subscribe(connectionEvent, event => this.onConnection(event))
         this.subscribe(requestEvent,    event => this.checkType(event) && this.request(event))
         this.subscribe(addEvent,        event => this.checkType(event) && this.addItem(event))
         this.subscribe(upsertEvent,     event => this.checkType(event) && this.upsert(event))
         this.subscribe(updateEvent,     event => this.checkType(event) && this.update(event))
         this.subscribe(removeEvent,     event => this.checkType(event) && this.remove(event))
         this.subscribe(restoreEvent,    event => this.checkType(event) && this.restore(event))
+        this.subscribe(checkEvent,      event => this.checkType(event) && this.check(event))
+    }
+
+    syncRoot() {
+        this.subscribe(syncEvent, event => this.checkType(event) && this.isNeedResync(event), null, 1)
 
         this.send(checkEvent, {
+            storageId: this._uuid,
             tuid: "",
             hash: this.db.getHashRoot(),
             syncedChildren: []
         })
+    }
 
+    isNeedResync({ tuid, hash, leafHash }) {
+        if(!tuid || this.db.getHashRoot() !== hash)
+            this.resync({ tuid, hash, leafHash })
+    }
+
+    resync({ tuid, hash, leafHash }) {
+        this.db.resyncRoot()
+
+        this.unsubscribe(checkEvent)
         this.subscribe(syncEvent, event => this.checkType(event) && this.sync(event))
-        this.subscribe(checkEvent, event => this.checkType(event) && this.check(event))
+
+        this.sync({ tuid, hash, leafHash })
     }
 
     onMakeRoom() {
-        if(this.isReady) return
-
-        this.isReady = true
         this.init()
     }
 
     onJoinRoom() {
-        if(this.isReady) return
-
-        this.isReady = true
         this.init()
+        this.syncRoot()
+    }
+
+    onConnection({ isHost }) {
+        if(!isHost)
+            this.syncRoot()
     }
 
     sync({ tuid, hash, leafHash }) {
-        if(this.db.isEmptyHash(hash))
-            return
-
-        if(this.db.isSyncRoot)
-            return
-
         const branchToCheck = this.db.syncBranch({ tuid, hash, leafHash })
+        branchToCheck.storageId = this._uuid
 
-        if(!this.db.isSyncRoot)
+        if(this.db.isSyncRoot) {
+            this.unsubscribe(syncEvent)
+            this.subscribe(checkEvent, event => this.checkType(event) && this.check(event))
+
+            if(this.db.isNeedSyncLeaves)
+                return this.loadLeaves()
+        }
+        else {
             this.send(checkEvent, branchToCheck)
+        }
     }
 
     check({ tuid, hash, syncedChildren }) {
         this.send(syncEvent, this.db.checkBranch({ tuid, hash, syncedChildren }))
+    }
+
+    loadLeaves() {
+       const leaves = this.db.getNeededLeaves()
+       console.log(leaves)
     }
 
     request({ tuid }) {

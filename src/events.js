@@ -61,6 +61,7 @@ export const checkEvent = EventFactory(
     Types.Object.Def({
         system: "storage",
         action: "checkBranch",
+        storageId: Types.UUID.Def(),
         storageType: Types.Key.Def(),
         tuid: Types.Key.Def(),
         hash: Types.Key.Def(),

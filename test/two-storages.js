@@ -19,7 +19,8 @@ test("Self sync", t => {
         data
     })
 
-    const firstSyncRoot = storage.syncHashRoot(storage.getHashRoot()+"resync")
+    storage.resyncRoot()
+    const firstSyncRoot = storage.syncBranch({ hash: "resync" })
 
     t.false(storage.isSyncRoot)
     t.false(storage.isNeedSyncLeaves)
@@ -48,7 +49,8 @@ test("One leaf", t => {
     })
 
     const newStorage = new TreeByUuid
-    const firstSyncRoot = newStorage.syncHashRoot(storage.getHashRoot())
+    newStorage.resyncRoot()
+    const firstSyncRoot = newStorage.syncBranch({ hash: "resync" })
 
     t.false(newStorage.isSyncRoot)
     t.false(newStorage.isNeedSyncLeaves)
@@ -97,7 +99,8 @@ test("Tree leaves, two for sync", t => {
 
     const newStorage = new TreeByUuid
     newStorage.addObject(storage.get(syncedLeaf.tuid))
-    const firstSyncRoot = newStorage.syncHashRoot(storage.getHashRoot())
+    newStorage.resyncRoot()
+    const firstSyncRoot = newStorage.syncBranch({ hash: "resync" })
 
     t.false(newStorage.isSyncRoot)
     t.false(newStorage.isNeedSyncLeaves)

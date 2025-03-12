@@ -13,6 +13,7 @@ test("One leaf", t => {
     const rootHash = tree.getRootHash()
 
     const newTree = new Tree
+    newTree.resyncRoot()
 
     let { tuid: tuidForSync, hash: hashForSync } = newTree.syncBranch({ hash: rootHash })
 
@@ -38,6 +39,7 @@ test("Two leaves", t => {
     const rootHash = tree.getRootHash()
 
     const newTree = new Tree
+    newTree.resyncRoot()
 
     let { tuid: tuidForSync, hash: hashForSync } = newTree.syncBranch({ hash: rootHash })
 
