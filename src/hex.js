@@ -5,7 +5,8 @@ export const Hex = {
       let hexString = ""
       
       for(let i = 0; i < bytes.length; i++) {
-            hexString += bytes[i].toString(16)
+          const byteString = bytes[i].toString(16)
+          hexString += byteString.length == 2 ? byteString : "0" + byteString
       }
   
       return hexString

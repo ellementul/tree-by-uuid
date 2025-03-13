@@ -58,7 +58,8 @@ test('Answer sync', async t => {
 
     t.true(singleStorage.db.isSyncRoot)
 
-    await later(200)
+    await later(10)
+    room.unsubscribe(checkEvent)
 
     t.false(singleStorage.db.isSyncRoot)
 })

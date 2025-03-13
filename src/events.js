@@ -65,7 +65,8 @@ export const checkEvent = EventFactory(
         storageType: Types.Key.Def(),
         tuid: Types.Key.Def(),
         hash: Types.Key.Def(),
-        syncedChildren: Types.Any.Def()
+        syncedChildren: Types.Any.Def(),
+        checkRoot: Types.Bool.Def()
     })
 )
 
@@ -73,6 +74,7 @@ export const syncEvent = EventFactory(
     Types.Object.Def({
         system: "storage",
         action: "syncBranch",
+        storageId: Types.UUID.Def(),
         storageType: Types.Key.Def(),
         tuid: Types.Key.Def(),
         hash: Types.Key.Def(),

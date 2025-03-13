@@ -42,19 +42,20 @@ export class StorageMember extends MemberFactory {
             storageId: this._uuid,
             tuid: "",
             hash: this.db.getHashRoot(),
-            syncedChildren: []
+            syncedChildren: [],
+            checkRoot: true
         })
     }
 
     isNeedResync({ tuid, hash, leafHash }) {
-        if(!tuid || this.db.getHashRoot() !== hash)
+        if(!tuid && this.db.getHashRoot() !== hash)
             this.resync({ tuid, hash, leafHash })
     }
 
     resync({ tuid, hash, leafHash }) {
         this.db.resyncRoot()
 
-        this.unsubscribe(checkEvent)
+        this.unsubscribe(syncEvent)
         this.subscribe(syncEvent, event => this.checkType(event) && this.sync(event))
 
         this.sync({ tuid, hash, leafHash })
@@ -75,23 +76,44 @@ export class StorageMember extends MemberFactory {
     }
 
     sync({ tuid, hash, leafHash }) {
+        if(this.db.isSyncRoot)
+            return
+
         const branchToCheck = this.db.syncBranch({ tuid, hash, leafHash })
-        branchToCheck.storageId = this._uuid
 
         if(this.db.isSyncRoot) {
             this.unsubscribe(syncEvent)
-            this.subscribe(checkEvent, event => this.checkType(event) && this.check(event))
 
             if(this.db.isNeedSyncLeaves)
                 return this.loadLeaves()
         }
         else {
-            this.send(checkEvent, branchToCheck)
+            this.send(checkEvent, {
+                ...branchToCheck,
+                storageId: this._uuid,
+                checkRoot: false
+            })
         }
     }
 
-    check({ tuid, hash, syncedChildren }) {
-        this.send(syncEvent, this.db.checkBranch({ tuid, hash, syncedChildren }))
+    check({ tuid, hash, syncedChildren, checkRoot }) {
+        if(!this.db.isSyncRoot)
+            return
+
+        if(checkRoot && this.db.getHashRoot() !== hash)
+            return this.send(syncEvent, {
+                tuid: '',
+                hash: this.db.getHashRoot(),
+                leafHash: '',
+                storageId: this._uuid
+            })
+
+
+        const validBranch = this.db.checkBranch({ tuid, hash, syncedChildren })
+        this.send(syncEvent, {
+            ...validBranch,
+            storageId: this._uuid,
+        })
     }
 
     loadLeaves() {

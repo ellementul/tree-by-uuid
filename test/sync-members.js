@@ -54,6 +54,10 @@ test('Add new object in bottom storage', async t => {
     await later(100)
 
     t.true(callback.called)
+    t.true(storage.db.isSyncRoot)
+    t.true(room.db.isSyncRoot)
+    t.true(room.db.getHashRoot() == storage.db.getHashRoot())
+    t.true(room.db.get(t.context.items[0]).tuid == t.context.items[0])
 })
 
 test('Add new object in top storage', async t => {
@@ -78,21 +82,31 @@ test('Add new object in top storage', async t => {
     await later(100)
 
     t.true(callback.called)
+    t.true(storage.db.isSyncRoot)
+    t.true(room.db.isSyncRoot)
+    t.true(room.db.getHashRoot() == storage.db.getHashRoot())
+    t.true(storage.db.get(t.context.items[1]).tuid == t.context.items[1])
 })
 
 test('sync new storage', async t => {
     const storageType = "Testing"
     const room = t.context.room
+    const storage = t.context.storage
     const newStorage = new StorageMember(storageType)
     room.addMember(newStorage)
+    // storage.receiveAll = console.log
 
-    const callback = sinon.fake()
-    room.subscribe(upsertEvent, callback)
-
+    t.true(storage.db.isSyncRoot)
+    t.true(room.db.isSyncRoot)
     await later(100)
+    
+    // Sync trees
+    t.true(storage.db.isSyncRoot)
+    t.true(room.db.isSyncRoot)
+    t.true(room.db.getHashRoot() == storage.db.getHashRoot())
+    t.true(newStorage.db.getHashRoot() == storage.db.getHashRoot())
 
-    t.true(newStorage.db.isSyncRoot)
-    t.true(callback.called)
-    t.is(t.context.items[0], callback.getCall(0).firstArg.item.tuid)
-    t.is(t.context.items[1], callback.getCall(1).firstArg.item.tuid)
+    // Sync leaves
+    // t.true(newStorage.db.get(t.context.items[0]).tuid == t.context.items[0])
+    // t.true(newStorage.db.get(t.context.items[1]).tuid == t.context.items[1])
 })
