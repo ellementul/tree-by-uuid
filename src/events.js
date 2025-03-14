@@ -78,6 +78,7 @@ export const syncEvent = EventFactory(
         storageType: Types.Key.Def(),
         tuid: Types.Key.Def(),
         hash: Types.Key.Def(),
-        leafHash: Types.Key.Def()
+        leafHash: Types.Key.Def(),
+        size: Types.Index.Def(256)
     })
 )

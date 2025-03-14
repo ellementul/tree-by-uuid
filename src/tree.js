@@ -103,11 +103,12 @@ export class Tree {
         return {
             tuid:  Hex.encode(TUIDBytes),
             hash: branch.hash,
-            leafHash: branch.leafHash
+            leafHash: branch.leafHash,
+            size: branch.size
         }
     }
 
-    syncBranch({ tuid, hash, leafHash }) {
+    syncBranch({ tuid, hash, leafHash, size }) {
         const TUIDBytes = tuid ? Array.from(Hex.decode(tuid)) : []
 
         let branch = this.root
@@ -119,17 +120,12 @@ export class Tree {
                 new Branch(branch, byte)
 
             branch = branch[byte]
-
-            if(!branch.isNeedSync)
-                break
         }
 
-        if(branch.isNeedSync) {
-            if(tuid && leafHash) {
-                this.isNeedSyncLeaf(tuid, leafHash)
-            }
+        branch.isNeedSync = branch.hash != hash
 
-            branch.isNeedSync = branch.hash != hash
+        if(tuid && leafHash) {
+            this.isNeedSyncLeaf(tuid, leafHash)
         }
 
         if(!branch.isNeedSync && branch.parent) {
@@ -199,6 +195,10 @@ class Branch extends Array {
         this.leafHash = ""
 
         this._isNeedSync = true
+    }
+
+    get size() {
+        return this.children.length
     }
 
     get isNeedSync() {

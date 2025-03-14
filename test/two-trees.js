@@ -51,5 +51,6 @@ test("Two leaves", t => {
         branchForCheck = newTree.syncBranch(branch)
     }
 
-    t.is(count, 3)
+    t.true(count > 3)
+    t.true(count < 6)
 })

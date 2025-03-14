@@ -81,11 +81,11 @@ export class StorageMember extends MemberFactory {
 
         const branchToCheck = this.db.syncBranch({ tuid, hash, leafHash })
 
+        if(this.db.isNeedSyncLeaves)
+            return this.loadLeaves()
+
         if(this.db.isSyncRoot) {
             this.unsubscribe(syncEvent)
-
-            if(this.db.isNeedSyncLeaves)
-                return this.loadLeaves()
         }
         else {
             this.send(checkEvent, {
@@ -118,7 +118,8 @@ export class StorageMember extends MemberFactory {
 
     loadLeaves() {
        const leaves = this.db.getNeededLeaves()
-       console.log(leaves)
+       
+       leaves.forEach(tuid => this.send(requestEvent, { tuid }))
     }
 
     request({ tuid }) {
@@ -128,20 +129,20 @@ export class StorageMember extends MemberFactory {
             this.send(upsertEvent, { item })
     }
 
-    addItem({ hash, data }) {
-
-        const { tuid } = this.db.addNewObject({ hash, data })
-        const item = this.db.get(tuid)
-
-        this.send(upsertEvent, { item })
-    }
-
     upsert({ item }) {
 
         if(this.db.has(item.tuid))
             this.db.updateObject(item)
         else
             this.db.addObject(item)
+    }
+
+    addItem({ hash, data }) {
+
+        const { tuid } = this.db.addNewObject({ hash, data })
+        const item = this.db.get(tuid)
+
+        this.send(upsertEvent, { item })
     }
 
     update({ tuid, hash, data }) {

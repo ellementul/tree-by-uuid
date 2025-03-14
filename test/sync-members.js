@@ -107,6 +107,6 @@ test('sync new storage', async t => {
     t.true(newStorage.db.getHashRoot() == storage.db.getHashRoot())
 
     // Sync leaves
-    // t.true(newStorage.db.get(t.context.items[0]).tuid == t.context.items[0])
-    // t.true(newStorage.db.get(t.context.items[1]).tuid == t.context.items[1])
+    t.true(newStorage.db.get(t.context.items[0]).tuid == t.context.items[0])
+    t.true(newStorage.db.get(t.context.items[1]).tuid == t.context.items[1])
 })
