@@ -21,6 +21,14 @@ export class TreeByUuid {
         return this.tree.isSynced
     }
 
+    get sizeRoot() {
+        return this.tree.sizeRoot
+    }
+
+    get size() {
+        return this.objects.size
+    }
+
     resyncRoot() {
         this.tree.resyncRoot()
     }

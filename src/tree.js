@@ -20,6 +20,10 @@ export class Tree {
         return !this.root.isNeedSync
     }
 
+    get sizeRoot() {
+        return this.root.size
+    }
+
     resyncRoot() {
         this.root.isNeedSync = true
     }

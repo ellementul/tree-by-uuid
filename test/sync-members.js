@@ -4,7 +4,7 @@ import sha1 from 'sha1'
 
 import { StorageMember } from '../src/member.js'
 import { EventFactory, MemberFactory, Types } from '@ellementul/uee-core'
-import { addEvent, checkEvent, removeEvent, requestEvent, restoreEvent, syncEvent, updateEvent, upsertEvent } from '../src/events.js'
+import { addEvent, checkEvent, removeEvent, requestEvent, restoreEvent, storageFullSyncedEvent, storageSyncedTreeEvent, storageSynchronizationEvent, syncEvent, updateEvent, upsertEvent } from '../src/events.js'
 
 function later(delay) {
     return new Promise(function(resolve) {
@@ -36,6 +36,9 @@ test('Add new object in bottom storage', async t => {
     const room = t.context.room
     const storage = t.context.storage
 
+    const syncCallback = sinon.fake()
+    room.subscribe(storageSynchronizationEvent, syncCallback)
+
     let tuid
     room.subscribe(upsertEvent, event => tuid = event.item.tuid, "test")
 
@@ -49,13 +52,12 @@ test('Add new object in bottom storage', async t => {
     const callback = sinon.fake()
     room.subscribe(upsertEvent, callback)
 
-    room.send(requestEvent, { tuid })
+    room.send(requestEvent, { leaves: [ tuid ] })
 
     await later(100)
 
     t.true(callback.called)
-    t.true(storage.db.isSyncRoot)
-    t.true(room.db.isSyncRoot)
+    t.false(syncCallback.called)
     t.true(room.db.getHashRoot() == storage.db.getHashRoot())
     t.true(room.db.get(t.context.items[0]).tuid == t.context.items[0])
 })
@@ -63,6 +65,9 @@ test('Add new object in bottom storage', async t => {
 test('Add new object in top storage', async t => {
     const room = t.context.room
     const storage = t.context.storage
+
+    const syncCallback = sinon.fake()
+    room.subscribe(storageSynchronizationEvent, syncCallback)
 
     let tuid
     storage.subscribe(upsertEvent, event => tuid = event.item.tuid, "test")
@@ -77,13 +82,12 @@ test('Add new object in top storage', async t => {
     const callback = sinon.fake()
     storage.subscribe(upsertEvent, callback)
 
-    storage.send(requestEvent, { tuid })
+    storage.send(requestEvent, { leaves: [ tuid ] })
 
     await later(100)
 
     t.true(callback.called)
-    t.true(storage.db.isSyncRoot)
-    t.true(room.db.isSyncRoot)
+    t.false(syncCallback.called)
     t.true(room.db.getHashRoot() == storage.db.getHashRoot())
     t.true(storage.db.get(t.context.items[1]).tuid == t.context.items[1])
 })
@@ -92,21 +96,32 @@ test('sync new storage', async t => {
     const storageType = "Testing"
     const room = t.context.room
     const storage = t.context.storage
+
     const newStorage = new StorageMember(storageType)
     room.addMember(newStorage)
-    // storage.receiveAll = console.log
+
+    const syncCallback = sinon.fake()
+    newStorage.subscribe(storageSynchronizationEvent, syncCallback)
+    storage.subscribe(storageSynchronizationEvent, syncCallback)
+
+    const syncTreeCallback = sinon.fake()
+    room.subscribe(storageSyncedTreeEvent, syncTreeCallback)
+    
+    const fullSyncedCallback = sinon.fake()
+    room.subscribe(storageFullSyncedEvent, fullSyncedCallback)
 
     t.true(storage.db.isSyncRoot)
     t.true(room.db.isSyncRoot)
     await later(100)
     
     // Sync trees
-    t.true(storage.db.isSyncRoot)
-    t.true(room.db.isSyncRoot)
+    t.true(syncCallback.calledOnce)
+    t.true(syncTreeCallback.calledOnce)
     t.true(room.db.getHashRoot() == storage.db.getHashRoot())
     t.true(newStorage.db.getHashRoot() == storage.db.getHashRoot())
 
     // Sync leaves
-    t.true(newStorage.db.get(t.context.items[0]).tuid == t.context.items[0])
-    t.true(newStorage.db.get(t.context.items[1]).tuid == t.context.items[1])
+    t.true(fullSyncedCallback.calledOnce)
+    t.truthy(newStorage.db.get(t.context.items[0]))
+    t.truthy(newStorage.db.get(t.context.items[1]))
 })
